@@ -60,10 +60,45 @@ canvas {
 .hud-top {
     display: flex;
     justify-content: space-between;
+    align-items: flex-start;
     padding: 24px 32px;
     font-size: 24px;
     font-weight: 600;
     background: linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, transparent 100%);
+}
+
+.hud-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+}
+
+.distance-display {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 12px 28px;
+    border-radius: 50px;
+    border: 1px solid var(--ui-border);
+}
+
+.distance-display #distVal {
+    font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.distance-unit {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .score-box {
@@ -76,7 +111,7 @@ canvas {
     padding: 16px 24px;
     border-radius: 16px;
     border: 1px solid var(--ui-border);
-    min-width: 140px;
+    min-width: 120px;
 }
 
 .score-label {
@@ -89,13 +124,61 @@ canvas {
 
 .score-val {
     font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
-    font-size: 32px;
+    font-size: 28px;
     font-weight: 700;
     background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     text-shadow: none;
+}
+
+/* Keyboard Controls Hint */
+#controls-hint {
+    position: absolute;
+    bottom: 24px;
+    left: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
+}
+
+#controls-hint:hover {
+    opacity: 1;
+}
+
+.key-row {
+    display: flex;
+    gap: 6px;
+}
+
+.key {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--ui-border);
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', 'SF Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    transition: all 0.1s ease;
+}
+
+.key.active {
+    background: var(--primary);
+    color: #000;
+    border-color: var(--primary);
+    box-shadow: 0 0 20px var(--primary-glow);
+    transform: scale(0.95);
 }
 
 /* Camera Preview - Modern Card */
@@ -282,7 +365,7 @@ h2 {
 .high-score-display {
     font-size: 18px;
     color: var(--bonus);
-    margin-bottom: 48px;
+    margin-bottom: 24px;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -290,6 +373,24 @@ h2 {
 
 .high-score-display::before {
     content: '👑';
+}
+
+/* Wave hint animation */
+.wave-hint {
+    font-size: 24px;
+    color: var(--primary);
+    margin-bottom: 32px;
+    animation: waveHint 1.5s ease-in-out infinite;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+@keyframes waveHint {
+    0%, 100% { transform: translateX(0); opacity: 0.7; }
+    25% { transform: translateX(-10px); opacity: 1; }
+    75% { transform: translateX(10px); opacity: 1; }
 }
 
 /* Instruction Cards - Glass Morphism */
@@ -400,9 +501,15 @@ h2 {
 #loading-msg {
     color: var(--text-secondary);
     margin-top: 16px;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 400;
-    animation: pulse 2s ease-in-out infinite;
+    text-align: center;
+    line-height: 1.6;
+}
+
+#loading-msg strong {
+    color: var(--primary);
+    font-weight: 600;
 }
 
 @keyframes pulse {

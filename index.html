@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Gesture Rider - AI Powered Moto Sim</title>
     
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,9 +37,15 @@
                 <span class="score-label">Score</span>
                 <span id="scoreVal" class="score-val">0</span>
             </div>
+            <div class="hud-center">
+                <div class="distance-display">
+                    <span id="distVal">0.0</span>
+                    <span class="distance-unit">KM</span>
+                </div>
+            </div>
             <div class="score-box" style="align-items: flex-end;">
-                <span class="score-label">Distance</span>
-                <span class="score-val"><span id="distVal">0.0</span> km</span>
+                <span class="score-label">Speed</span>
+                <span id="speedVal" class="score-val">0</span>
             </div>
         </div>
         
@@ -48,12 +57,25 @@
             <div class="state-row"><span>Tilt</span> <span id="g-tilt" class="val">0°</span></div>
             <div class="state-row"><span>Action</span> <span id="g-action" class="val">Idle</span></div>
         </div>
+
+        <!-- Keyboard Controls Indicator -->
+        <div id="controls-hint">
+            <div class="key-row">
+                <span class="key">W</span>
+            </div>
+            <div class="key-row">
+                <span class="key">A</span>
+                <span class="key">S</span>
+                <span class="key">D</span>
+            </div>
+        </div>
     </div>
 
     <div id="game-over-screen" class="hidden">
         <div class="crash-title">CRASHED</div>
         <div class="final-score">Your Score: <span id="final-score">0</span></div>
         <div class="high-score-display">Best: <span id="best-score">0</span></div>
+        <div class="wave-hint">👋 Wave to try again</div>
         <button id="restart-btn" class="btn">TRY AGAIN</button>
     </div>
 
@@ -62,6 +84,10 @@
         <h2>AI Powered Highway Experience</h2>
         
         <div class="instructions">
+            <div class="instruction-card">
+                <h3>👋 Wave</h3>
+                <p>Wave your hand to start or restart the game.</p>
+            </div>
             <div class="instruction-card">
                 <h3>✋ Steer</h3>
                 <p>Tilt your hand left or right like a doorknob.</p>
@@ -73,10 +99,6 @@
             <div class="instruction-card">
                 <h3>✊ Brake</h3>
                 <p>Close your hand into a fist to slow down.</p>
-            </div>
-            <div class="instruction-card">
-                <h3>⌨️ Keyboard</h3>
-                <p>Arrows to steer, Space to accelerate, B to brake.</p>
             </div>
         </div>
 

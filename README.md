@@ -22,9 +22,11 @@ You can play using your webcam (AI Mode) or keyboard (Fallback Mode).
 
 | Action | Hand Gesture ✋ | Keyboard ⌨️ |
 |--------|----------------|-------------|
-| Steer | Tilt hand Left / Right (like a doorknob) | Left Arrow / Right Arrow |
-| Accelerate | Open Palm (Spread fingers) | Spacebar / Up Arrow |
-| Brake | Closed Fist | B / Down Arrow |
+| Start / Restart | Wave hand side-to-side | Click Button |
+| Steer Left | Tilt hand Left (like a doorknob) | A / Left Arrow |
+| Steer Right | Tilt hand Right (like a doorknob) | D / Right Arrow |
+| Accelerate (Forward) | Open Palm (Spread fingers) | W / Up Arrow |
+| Brake | Closed Fist | S / Down Arrow |
 
 ## 🛠️ Technical Implementation
 

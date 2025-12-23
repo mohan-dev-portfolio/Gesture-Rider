@@ -183,8 +183,27 @@ class InputSystem {
     constructor() {
         this.keys = {};
         this.gesture = { tilt: 0, throttle: 0, brake: 0, active: false };
+        
+        // Keyboard steering - more responsive
+        this.keyboardSteer = 0;
+        this.steerSpeed = 0.25; // Fast steering response
+        this.steerReturn = 0.2; // Quick return to center
+        
+        // Wave gesture detection
+        this.waveHistory = [];
+        this.waveThreshold = 3; // Number of direction changes needed
+        this.waveTimeWindow = 1500; // Time window in ms
+        this.lastWaveTime = 0;
+        this.waveCooldown = 1000; // Cooldown between wave detections
+        this.onWaveDetected = null; // Callback for wave gesture
 
-        window.addEventListener('keydown', (e) => this.keys[e.code] = true);
+        window.addEventListener('keydown', (e) => {
+            this.keys[e.code] = true;
+            // Prevent default for game keys to avoid page scrolling
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW', 'KeyA', 'KeyS', 'KeyD'].includes(e.code)) {
+                e.preventDefault();
+            }
+        });
         window.addEventListener('keyup', (e) => this.keys[e.code] = false);
 
         this.videoElement = document.getElementById('input_video');
@@ -220,6 +239,7 @@ class InputSystem {
             drawLandmarks(this.ctxPreview, landmarks, {color: '#FF0000', lineWidth: 1});
             
             this.processGesture(landmarks);
+            this.detectWaveGesture(landmarks);
             this.gesture.active = true;
             document.getElementById('g-status').innerText = "Tracking";
             document.getElementById('g-status').style.color = "#00ff88";
@@ -277,6 +297,48 @@ class InputSystem {
 
     dist(p1, p2) { return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2)); }
 
+    detectWaveGesture(landmarks) {
+        const now = Date.now();
+        const wrist = landmarks[0];
+        
+        // Add current position to history
+        this.waveHistory.push({
+            x: wrist.x,
+            time: now
+        });
+        
+        // Remove old entries outside time window
+        this.waveHistory = this.waveHistory.filter(p => now - p.time < this.waveTimeWindow);
+        
+        // Need at least 4 points to detect wave
+        if (this.waveHistory.length < 4) return;
+        
+        // Check for direction changes (wave motion)
+        let directionChanges = 0;
+        let lastDirection = null;
+        
+        for (let i = 1; i < this.waveHistory.length; i++) {
+            const dx = this.waveHistory[i].x - this.waveHistory[i-1].x;
+            if (Math.abs(dx) > 0.02) { // Minimum movement threshold
+                const direction = dx > 0 ? 'right' : 'left';
+                if (lastDirection && direction !== lastDirection) {
+                    directionChanges++;
+                }
+                lastDirection = direction;
+            }
+        }
+        
+        // Check if wave detected and not in cooldown
+        if (directionChanges >= this.waveThreshold && (now - this.lastWaveTime) > this.waveCooldown) {
+            this.lastWaveTime = now;
+            this.waveHistory = []; // Clear history after detection
+            console.log('Wave gesture detected!');
+            if (this.onWaveDetected) {
+                this.onWaveDetected();
+            }
+        }
+    }
+
     getCommand() {
         let cmd = { steer: 0, accel: 0, brake: 0 };
         if (this.gesture.active) {
@@ -284,12 +346,53 @@ class InputSystem {
             cmd.accel = this.gesture.throttle;
             cmd.brake = this.gesture.brake;
         } else {
-            if (this.keys['ArrowLeft']) cmd.steer = -1;
-            if (this.keys['ArrowRight']) cmd.steer = 1;
-            if (this.keys['Space'] || this.keys['ArrowUp']) cmd.accel = 1;
-            if (this.keys['KeyB'] || this.keys['ArrowDown']) cmd.brake = 1;
+            // Smooth keyboard steering with WASD and Arrow keys
+            let targetSteer = 0;
+            // Left: A or Left Arrow
+            if (this.keys['ArrowLeft'] || this.keys['KeyA']) targetSteer = 1;
+            // Right: D or Right Arrow
+            if (this.keys['ArrowRight'] || this.keys['KeyD']) targetSteer = -1;
+            
+            // Smoothly interpolate steering
+            if (targetSteer !== 0) {
+                this.keyboardSteer += (targetSteer - this.keyboardSteer) * this.steerSpeed;
+            } else {
+                // Return to center faster
+                this.keyboardSteer *= (1 - this.steerReturn);
+                if (Math.abs(this.keyboardSteer) < 0.01) this.keyboardSteer = 0;
+            }
+            
+            cmd.steer = this.keyboardSteer;
+            
+            // Forward/Accelerate: W or Up Arrow
+            if (this.keys['ArrowUp'] || this.keys['KeyW']) cmd.accel = 1;
+            // Brake: S or Down Arrow
+            if (this.keys['ArrowDown'] || this.keys['KeyS']) cmd.brake = 1;
+            
+            // Update visual hint for active keys
+            this.updateKeyHints();
         }
         return cmd;
+    }
+    
+    updateKeyHints() {
+        const hint = document.getElementById('controls-hint');
+        if (!hint) return;
+        
+        const keys = hint.querySelectorAll('.key');
+        keys.forEach(key => {
+            const keyText = key.textContent;
+            let isActive = false;
+            // W = Forward
+            if (keyText === 'W') isActive = this.keys['KeyW'] || this.keys['ArrowUp'];
+            // A = Left
+            if (keyText === 'A') isActive = this.keys['KeyA'] || this.keys['ArrowLeft'];
+            // S = Brake
+            if (keyText === 'S') isActive = this.keys['KeyS'] || this.keys['ArrowDown'];
+            // D = Right
+            if (keyText === 'D') isActive = this.keys['KeyD'] || this.keys['ArrowRight'];
+            key.classList.toggle('active', isActive);
+        });
     }
 }
 
@@ -504,8 +607,10 @@ class Game {
         this.updateTraffic(dt, playerSegment);
         this.checkSpriteCollisions(); // Check tree collisions
 
+        // Update HUD
         document.getElementById('scoreVal').innerText = Math.floor(this.score);
         document.getElementById('distVal').innerText = (this.distanceRun / 100000).toFixed(1);
+        document.getElementById('speedVal').innerText = Math.floor(this.speed / 100);
     }
 
     checkSpriteCollisions() {
@@ -847,22 +952,48 @@ window.onload = () => {
     const loadingMsg = document.getElementById('loading-msg');
     const overlay = document.getElementById('overlay-screen');
     const game = new Game();
+    let gameStarted = false;
+    let cameraReady = false;
 
-    startBtn.disabled = false;
-    startBtn.innerText = "START ENGINE";
-    loadingMsg.innerText = "Camera access required for AI control";
+    // Function to start the game
+    const startGame = () => {
+        if (gameStarted) return;
+        gameStarted = true;
+        overlay.classList.add('hidden');
+        game.start();
+    };
 
-    startBtn.addEventListener('click', async () => {
-        startBtn.innerText = "Requesting Camera...";
+    // Set up wave gesture callback for starting
+    game.input.onWaveDetected = () => {
+        if (!gameStarted && cameraReady) {
+            startGame();
+        } else if (game.isGameOver) {
+            game.restart();
+        }
+    };
+
+    // Try to start camera immediately
+    (async () => {
+        startBtn.disabled = true;
+        startBtn.innerText = "Loading Camera...";
+        loadingMsg.innerText = "Initializing hand tracking...";
+        
         try {
             await game.input.startCamera();
-            overlay.classList.add('hidden');
-            game.start();
+            cameraReady = true;
+            startBtn.disabled = false;
+            startBtn.innerText = "START ENGINE";
+            loadingMsg.innerHTML = '👋 <strong>Wave your hand</strong> to start<br>or click the button below';
         } catch(e) {
             console.error(e);
-            alert("Camera failed. Starting in Keyboard Mode.");
-            overlay.classList.add('hidden');
-            game.start();
+            cameraReady = false;
+            startBtn.disabled = false;
+            startBtn.innerText = "START (Keyboard Mode)";
+            loadingMsg.innerText = "Camera unavailable - Keyboard controls only";
         }
+    })();
+
+    startBtn.addEventListener('click', () => {
+        startGame();
     });
 };
