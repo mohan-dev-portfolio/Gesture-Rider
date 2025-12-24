@@ -54,7 +54,7 @@ Instead of a true 3D engine, the game uses a **Z-Map Segment Projection** techni
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/gesture-rider.git
+   git clone https://github.com/mohan-dev-portfolio/gesture-rider.git
    ```
 
 2. **Open the file:**
